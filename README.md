@@ -1,5 +1,7 @@
 # machine_vision
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 Aplicacion web que recibe la imagen de una hoja escaneada, reconstruye su contenido y devuelve un archivo Excel editable.
 
 ## Stack
