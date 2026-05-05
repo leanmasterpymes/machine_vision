@@ -7,8 +7,9 @@ Aplicacion web que recibe la imagen de una hoja escaneada, reconstruye su conten
 ## Stack
 
 - **UI:** Streamlit (subida + edicion de tabla + descarga)
-- **Vision:** modelo de vision multimodal de Anthropic via `anthropic` SDK
+- **Vision:** modelo de vision multimodal de Anthropic via `anthropic` SDK (Sonnet 4.6 por defecto, configurable con `VISION_MODEL`)
 - **Excel:** openpyxl + pandas
+- **Python:** 3.12 (pineado en `.python-version`)
 
 ## Estructura
 

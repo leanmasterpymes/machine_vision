@@ -1,12 +1,15 @@
 import base64
+import io
 import json
 import os
 import re
 from pathlib import Path
 
+from PIL import Image, ImageOps
 from anthropic import Anthropic
 
-MODEL = "claude-opus-4-7"
+MODEL = os.getenv("VISION_MODEL", "claude-sonnet-4-6")
+MAX_IMAGE_SIDE = int(os.getenv("MAX_IMAGE_SIDE", "1800"))
 
 PROMPT = """Eres un sistema de extraccion de datos a partir de imagenes de hojas escaneadas.
 
@@ -42,17 +45,19 @@ Reglas generales:
 
 
 def _image_to_base64(path: Path) -> tuple[str, str]:
-    suffix = path.suffix.lower().lstrip(".")
-    media_map = {
-        "jpg": "image/jpeg",
-        "jpeg": "image/jpeg",
-        "png": "image/png",
-        "gif": "image/gif",
-        "webp": "image/webp",
-    }
-    media_type = media_map.get(suffix, "image/jpeg")
-    data = base64.standard_b64encode(path.read_bytes()).decode("utf-8")
-    return media_type, data
+    img = Image.open(path)
+    img = ImageOps.exif_transpose(img)
+    if img.mode not in ("RGB", "L"):
+        img = img.convert("RGB")
+    w, h = img.size
+    longest = max(w, h)
+    if longest > MAX_IMAGE_SIDE:
+        scale = MAX_IMAGE_SIDE / longest
+        img = img.resize((int(w * scale), int(h * scale)), Image.LANCZOS)
+    buf = io.BytesIO()
+    img.save(buf, format="JPEG", quality=85, optimize=True)
+    data = base64.standard_b64encode(buf.getvalue()).decode("utf-8")
+    return "image/jpeg", data
 
 
 def _strip_code_fence(text: str) -> str:
@@ -82,7 +87,7 @@ def extract_sheet(image_path: Path) -> dict:
 
     message = client.messages.create(
         model=MODEL,
-        max_tokens=8000,
+        max_tokens=4000,
         messages=[
             {
                 "role": "user",
